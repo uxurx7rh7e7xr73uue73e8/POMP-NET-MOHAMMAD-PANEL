@@ -122,6 +122,8 @@ input, select, textarea {
   display: grid;
   gap: 9px;
   width: min(310px, calc(100vw - 24px));
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
   padding: 14px;
   border: 1px solid var(--pomp-border);
   border-radius: 22px;
@@ -163,6 +165,50 @@ input, select, textarea {
   background: rgba(139,53,255,.16);
 }
 
+.pompnet-welcome {
+  box-sizing: border-box;
+  width: min(100% - 24px, 760px);
+  margin: 20px auto;
+  padding: 24px 18px;
+  direction: rtl;
+  text-align: center;
+  border: 1px solid var(--pomp-border);
+  border-radius: 24px;
+  background:
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(139,53,255,.16),
+      transparent 45%
+    ),
+    rgba(15,11,26,.78);
+  box-shadow: 0 12px 45px rgba(0,0,0,.25);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.pompnet-welcome .pompnet-brand-title {
+  margin-bottom: 14px;
+  font-size: clamp(19px, 5vw, 27px);
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 24px rgba(139,53,255,.55);
+}
+
+.pompnet-welcome p {
+  margin: 9px 0;
+  line-height: 2;
+  color: var(--pomp-muted);
+  font-size: 13px;
+}
+
+.pompnet-welcome strong {
+  display: block;
+  margin-top: 15px;
+  line-height: 2;
+  color: #d9bdff;
+  font-size: 13px;
+}
+
 @media (max-width: 640px) {
   body {
     overflow-x: hidden;
@@ -170,6 +216,10 @@ input, select, textarea {
 
   .pomp-contact-links {
     width: min(290px, calc(100vw - 24px));
+  }
+
+  .pompnet-welcome {
+    padding: 20px 14px;
   }
 }
 
@@ -233,12 +283,20 @@ CONTACT_MENU = """
 </aside>
 """
 
-# نام‌های نمایشی شناخته‌شده؛ این جایگزینی جایگزین بررسی کل پروژه نیست.
+WELCOME = """
+<section class="pompnet-welcome"
+         aria-label="خوشامدگویی پمپ‌نت">
+  <div class="pompnet-brand-title">✦ POMP NET MOHAMMAD 👑</div>
+  <p>اینجا مرز میان قدرت، امنیت و اصالت محو می‌شود؛</p>
+  <p>قلمرویی اختصاصی که هر جزئیات آن با امضای مستر یوسف شکل گرفته است.</p>
+  <strong>⚡ فراتر از یک پنل؛ یک امپراتوری دیجیتال با هویتی که تکرار نمی‌شود. 💜</strong>
+</section>
+"""
+
 BRAND_PATTERNS = [
     r"(?i)Spider\s*Panel\s*v?\d+(?:\.\d+)*",
     r"(?i)Spider\s*Panel",
     r"(?i)SpiderPanel",
-    r"(?i)SPiDER\s+PANEL",
 ]
 
 
@@ -246,7 +304,6 @@ def replace_visible_brand(html: str) -> str:
     for pattern in BRAND_PATTERNS:
         html = re.sub(pattern, "POMP NET MOHAMMAD", html)
 
-    # نام صفحه را به برند اختصاصی تغییر می‌دهد.
     title = f"<title>{BRAND} | پنل مدیریت</title>"
     title_pattern = r"<title\b[^>]*>.*?</title>"
 
@@ -269,8 +326,10 @@ def set_persian_rtl(html: str) -> str:
         return html
 
     attrs = match.group(1)
+
+    # فقط ویژگی‌های lang و dir حذف می‌شوند؛ سایر ویژگی‌ها حفظ می‌شوند.
     attrs = re.sub(
-        r"""\s+(?:lang|dir)\s*=\s*(?:"[^"]*"|'[^']*')""",
+        r"""\s+(?:lang|dir)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)""",
         "",
         attrs,
         flags=re.I,
@@ -293,10 +352,27 @@ def inject_once(html: str, marker: str, snippet: str) -> str:
             flags=re.I,
         )
 
+    # اگر head وجود ندارد، HTML را دست‌کاری گسترده نمی‌کنیم.
     return html
 
 
-def add_branding(html: str) -> str:
+def add_welcome(html: str) -> str:
+    if 'class="pompnet-welcome"' in html:
+        return html
+
+    if not re.search(r"</body\s*>", html, re.I):
+        return html
+
+    return re.sub(
+        r"</body\s*>",
+        lambda _: WELCOME + "\n</body>",
+        html,
+        count=1,
+        flags=re.I,
+    )
+
+
+def add_branding(html: str, page: Path) -> str:
     html = replace_visible_brand(html)
     html = set_persian_rtl(html)
 
@@ -310,7 +386,7 @@ def add_branding(html: str) -> str:
         )
 
     if not re.search(
-        r"""<link\b[^>]*rel=["'](?:shortcut\s+)?icon["']""",
+        r"""<link\b[^>]*rel\s*=\s*["'](?:shortcut\s+)?icon["']""",
         html,
         re.I,
     ):
@@ -321,8 +397,9 @@ def add_branding(html: str) -> str:
             'href="/static/pompnet-logo.svg">',
         )
 
-    marker = 'aria-label="لینک‌های رسمی POMP NET"'
-    if marker not in html:
+    contact_marker = 'aria-label="لینک‌های رسمی POMP NET"'
+
+    if contact_marker not in html:
         if re.search(r"</body\s*>", html, re.I):
             html = re.sub(
                 r"</body\s*>",
@@ -331,8 +408,11 @@ def add_branding(html: str) -> str:
                 count=1,
                 flags=re.I,
             )
-        else:
-            html += "\n" + CONTACT_MENU
+
+    # پیام خوشامدگویی فقط در صفحه ورود و اشتراک نمایش داده می‌شود.
+    relative_path = page.relative_to(STATIC).as_posix().lower()
+    if relative_path in ("login.html", "sub.html"):
+        html = add_welcome(html)
 
     return html
 
@@ -343,7 +423,7 @@ def main() -> None:
 
     for page in HTML_FILES:
         original = page.read_text(encoding="utf-8")
-        updated = add_branding(original)
+        updated = add_branding(original, page)
 
         if updated != original:
             page.write_text(updated, encoding="utf-8")
@@ -351,7 +431,6 @@ def main() -> None:
         else:
             print(f"UNCHANGED: {page.relative_to(ROOT)}")
 
-    # کنترل نهایی وجود فایل‌های حیاتی؛ هیچ‌کدام بازنویسی نمی‌شوند.
     for file_path in REQUIRED_FILES:
         if not file_path.is_file():
             raise SystemExit(
