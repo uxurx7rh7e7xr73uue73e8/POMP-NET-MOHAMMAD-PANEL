@@ -1,0 +1,375 @@
+/* ==================================================
+   POMP NET MOHAMMAD 👑
+   CRYSTAL GLASS UI — OFFICIAL THEME
+   Persian RTL • Mobile First • Responsive
+   ================================================== */
+
+:root {
+  color-scheme: dark;
+
+  --pomp-bg: #050509;
+  --pomp-bg-secondary: #0B0813;
+
+  --pomp-purple: #8B35FF;
+  --pomp-blue: #168CFF;
+  --pomp-pink: #FF3DBB;
+
+  --pomp-text: #F8F5FF;
+  --pomp-muted: #B7A9CC;
+
+  --pomp-glass: rgba(16, 12, 27, 0.82);
+  --pomp-glass-hover: rgba(31, 20, 48, 0.92);
+
+  --pomp-border: rgba(139, 53, 255, 0.32);
+  --pomp-shadow: 0 12px 40px rgba(0, 0, 0, 0.38);
+
+  --pomp-radius: 18px;
+  --pomp-transition: 220ms ease;
+}
+
+/* ---------- Base ---------- */
+
+html {
+  min-height: 100%;
+  background: var(--pomp-bg);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  margin: 0;
+  color: var(--pomp-text);
+  background:
+    radial-gradient(
+      ellipse at 10% 0%,
+      rgba(139, 53, 255, 0.15),
+      transparent 42%
+    ),
+    radial-gradient(
+      ellipse at 95% 15%,
+      rgba(22, 140, 255, 0.11),
+      transparent 38%
+    ),
+    radial-gradient(
+      ellipse at 50% 100%,
+      rgba(255, 61, 187, 0.07),
+      transparent 45%
+    ),
+    var(--pomp-bg);
+
+  font-family: Vazirmatn, IRANSans, Tahoma, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: var(--pomp-blue);
+  text-decoration: none;
+  transition:
+    color var(--pomp-transition),
+    opacity var(--pomp-transition);
+}
+
+a:hover {
+  color: var(--pomp-pink);
+}
+
+::selection {
+  color: #fff;
+  background: var(--pomp-purple);
+}
+
+/* ---------- Glass Cards ---------- */
+
+.card,
+.panel,
+.dashboard-card,
+.stat-card,
+.modal-content,
+.dropdown-menu {
+  color: var(--pomp-text);
+  background: var(--pomp-glass);
+  border: 1px solid var(--pomp-border);
+  border-radius: var(--pomp-radius);
+  box-shadow: var(--pomp-shadow);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  transition:
+    background var(--pomp-transition),
+    border-color var(--pomp-transition),
+    transform var(--pomp-transition);
+}
+
+.card:hover,
+.dashboard-card:hover,
+.stat-card:hover {
+  background: var(--pomp-glass-hover);
+  border-color: rgba(139, 53, 255, 0.58);
+}
+
+/* ---------- Headings ---------- */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--pomp-text);
+  font-weight: 800;
+  line-height: 1.7;
+}
+
+.brand,
+.logo,
+.brand-name {
+  color: var(--pomp-text);
+  font-weight: 900;
+  letter-spacing: 0.3px;
+}
+
+.brand-accent {
+  background: linear-gradient(
+    100deg,
+    var(--pomp-purple),
+    var(--pomp-blue),
+    var(--pomp-pink)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Buttons ---------- */
+
+button,
+.btn,
+.button,
+input[type="submit"],
+input[type="button"] {
+  border-radius: 12px;
+  transition:
+    transform var(--pomp-transition),
+    box-shadow var(--pomp-transition),
+    filter var(--pomp-transition);
+}
+
+.btn-primary,
+.button-primary,
+button.primary,
+input[type="submit"] {
+  color: #fff;
+  background: linear-gradient(
+    115deg,
+    var(--pomp-purple),
+    #6738F5,
+    var(--pomp-blue)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  box-shadow: 0 5px 22px rgba(139, 53, 255, 0.23);
+}
+
+.btn-primary:hover,
+.button-primary:hover,
+button.primary:hover,
+input[type="submit"]:hover {
+  filter: brightness(1.12);
+  box-shadow: 0 7px 28px rgba(139, 53, 255, 0.35);
+}
+
+button:active,
+.btn:active,
+.button:active {
+  transform: scale(0.98);
+}
+
+/* ---------- Inputs ---------- */
+
+input,
+select,
+textarea {
+  color: var(--pomp-text);
+  background: rgba(5, 5, 9, 0.78);
+  border: 1px solid rgba(139, 53, 255, 0.26);
+  border-radius: 12px;
+  outline: none;
+  transition:
+    border-color var(--pomp-transition),
+    box-shadow var(--pomp-transition);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--pomp-purple);
+  box-shadow: 0 0 0 3px rgba(139, 53, 255, 0.13);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--pomp-muted);
+}
+
+/* ---------- Navigation ---------- */
+
+nav,
+.sidebar,
+.navbar,
+aside {
+  color: var(--pomp-text);
+  background-color: rgba(8, 7, 14, 0.88);
+  border-color: var(--pomp-border);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+nav a,
+.sidebar a,
+.navbar a,
+aside a {
+  transition:
+    color var(--pomp-transition),
+    background var(--pomp-transition);
+}
+
+nav a:hover,
+.sidebar a:hover,
+.navbar a:hover,
+aside a:hover {
+  color: var(--pomp-pink);
+}
+
+/* ---------- Tables ---------- */
+
+table {
+  width: 100%;
+  color: var(--pomp-text);
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 12px;
+  border-bottom: 1px solid rgba(139, 53, 255, 0.17);
+}
+
+th {
+  color: #D9C3FF;
+  background: rgba(139, 53, 255, 0.09);
+}
+
+/* ---------- Badges and Status ---------- */
+
+.badge,
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  color: #E9D9FF;
+  background: rgba(139, 53, 255, 0.14);
+  border: 1px solid rgba(139, 53, 255, 0.28);
+  border-radius: 999px;
+}
+
+.status-online,
+.text-success {
+  color: #68F5B0;
+}
+
+.status-error,
+.text-danger {
+  color: #FF668D;
+}
+
+.text-muted,
+.muted {
+  color: var(--pomp-muted);
+}
+
+/* ---------- Scrollbar ---------- */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--pomp-purple) var(--pomp-bg);
+}
+
+*::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--pomp-bg);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    var(--pomp-purple),
+    var(--pomp-blue)
+  );
+  border-radius: 999px;
+}
+
+/* ---------- Focus Accessibility ---------- */
+
+:focus-visible {
+  outline: 2px solid var(--pomp-blue);
+  outline-offset: 3px;
+}
+
+/* ---------- Mobile ---------- */
+
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  .card,
+  .panel,
+  .dashboard-card,
+  .stat-card {
+    border-radius: 15px;
+  }
+
+  button,
+  .btn,
+  .button {
+    min-height: 42px;
+  }
+
+  table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* ---------- Reduced Motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
