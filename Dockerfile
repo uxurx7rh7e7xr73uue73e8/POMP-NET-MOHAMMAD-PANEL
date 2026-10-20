@@ -17,7 +17,7 @@ RUN apt-get update \
        pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# ساخت باینری واقعی MTProxy
+# Build the real MTProxy binary
 RUN git clone --depth 1 \
     https://github.com/TelegramMessenger/MTProxy.git /tmp/MTProxy \
     && make -C /tmp/MTProxy \
@@ -27,7 +27,7 @@ RUN git clone --depth 1 \
        /usr/local/bin/mtproto-proxy \
     && rm -rf /tmp/MTProxy
 
-# دریافت نسخه مشخص هسته اصلی SpiderPanel
+# Use the pinned SpiderPanel core
 ARG SPIDERPANEL_COMMIT=e20c3849b8033c2d89f64070bebd4dca461db7e2
 
 RUN git init /tmp/panel-source \
@@ -39,10 +39,10 @@ RUN git init /tmp/panel-source \
     && cp -a /tmp/panel-source/. /app/ \
     && rm -rf /tmp/panel-source
 
-# فایل برندینگ اختصاصی
+# Apply the existing POMP NET branding script
 COPY pompnet_brand.py /tmp/pompnet_brand.py
 
-# بررسی فایل‌های ضروری و نصب وابستگی‌های واقعی
+# Validate essential files and install dependencies
 RUN test -f /app/main.py \
     && test -f /app/requirements.txt \
     && test -f /app/static/index.html \
@@ -56,4 +56,4 @@ RUN test -f /app/main.py \
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "1"]
