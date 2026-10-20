@@ -29,7 +29,8 @@ RUN git clone --depth 1 \
        /usr/local/bin/mtproto-proxy \
     && rm -rf /tmp/MTProxy
 
-# Use the pinned SpiderPanel core
+# Download the pinned upstream core.
+# The application core is retained; branding is applied separately.
 ARG SPIDERPANEL_COMMIT=e20c3849b8033c2d89f64070bebd4dca461db7e2
 
 RUN git init /tmp/panel-source \
@@ -41,20 +42,30 @@ RUN git init /tmp/panel-source \
     && cp -a /tmp/panel-source/. /app/ \
     && rm -rf /tmp/panel-source
 
-# Apply POMP NET branding
+# POMP NET branding script
 COPY pompnet_brand.py /tmp/pompnet_brand.py
 
-# Validate files, install Python dependencies and compile checks
-RUN test -f /app/main.py \
-    && test -f /app/requirements.txt \
-    && test -f /app/static/index.html \
-    && test -f /app/static/login.html \
-    && test -f /app/static/sub.html \
-    && python -m pip install --upgrade pip \
-    && python -m pip install -r /app/requirements.txt \
-    && python -m py_compile /tmp/pompnet_brand.py \
-    && python /tmp/pompnet_brand.py /app \
-    && python -m py_compile /app/main.py
+# Optional HTML cleanup script.
+# The build remains compatible if this file has not been added yet.
+COPY pompnet_cleanup.py /tmp/pompnet_cleanup.py
+
+# Install dependencies, validate required files,
+# apply branding, clean promotional links and compile Python.
+RUN set -eux; \
+    test -f /app/main.py; \
+    test -f /app/requirements.txt; \
+    test -f /app/static/index.html; \
+    test -f /app/static/login.html; \
+    test -f /app/static/sub.html; \
+    python -m pip install --upgrade pip; \
+    python -m pip install -r /app/requirements.txt; \
+    python -m py_compile /tmp/pompnet_brand.py; \
+    python /tmp/pompnet_brand.py /app; \
+    if [ -f /tmp/pompnet_cleanup.py ]; then \
+        python -m py_compile /tmp/pompnet_cleanup.py; \
+        python /tmp/pompnet_cleanup.py /app; \
+    fi; \
+    python -m py_compile /app/main.py
 
 EXPOSE 8080
 
