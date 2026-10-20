@@ -3,8 +3,13 @@
 
 """
 POMP NET MOHAMMAD
-Frontend branding cleanup.
-فقط فایل‌های متنی رابط کاربری را بررسی می‌کند.
+Safe frontend branding and cleanup.
+
+- Fixes the HTML regex capture-group crash.
+- Preserves backend code, API routes and application logic.
+- Updates branding only in HTML files.
+- Keeps existing HTML attributes except lang and dir.
+- Adds the POMP NET glass theme when needed.
 """
 
 from pathlib import Path
@@ -15,22 +20,9 @@ ROOT = Path(sys.argv[1] if len(sys.argv) > 1 else "/app").resolve()
 STATIC = ROOT / "static"
 
 BRAND = "POMP NET MOHAMMAD"
+STYLE_MARKER = "POMP NET MOHAMMAD — CRYSTAL GLASS"
 
-EXTENSIONS = {
-    ".html", ".htm", ".css", ".js", ".mjs", ".svg"
-}
-
-OLD_BRAND = re.compile(
-    r"spider\s*panel(?:\s*v?\d+(?:\.\d+)*)?|spiderpanel",
-    re.IGNORECASE,
-)
-
-OLD_BRAND_URL = re.compile(
-    r"""https?://[^\s"'<>)]*(?:spiderpanel|spider-panel)[^\s"'<>)]*""",
-    re.IGNORECASE,
-)
-
-COLORS = r"""
+GLASS_CSS = r"""
 /* POMP NET MOHAMMAD — CRYSTAL GLASS */
 :root {
   color-scheme: dark;
@@ -62,7 +54,7 @@ button, input, select, textarea {
 
 ::selection {
   background: var(--pomp-purple);
-  color: white;
+  color: #fff;
 }
 
 @media (max-width: 640px) {
@@ -72,125 +64,174 @@ button, input, select, textarea {
 }
 """
 
-def clean_html(text: str) -> str:
-    # حذف لینک‌هایی که مستقیماً به برند قبلی اشاره می‌کنند.
-    def remove_old_anchor(match):
-        anchor = match.group(0)
+OLD_BRAND = re.compile(
+    r"spider\s*panel(?:\s*v?\d+(?:\.\d+)*)?|spiderpanel",
+    re.IGNORECASE,
+)
 
-        if OLD_BRAND.search(anchor):
-            if re.search(
-                r"""href\s*=\s*(['"])[^'"]*(?:spiderpanel|spider-panel)[^'"]*\1""",
-                anchor,
-                re.IGNORECASE,
-            ):
-                return ""
 
-        return anchor
+def log(status, message):
+    print(f"[{status}] {message}", flush=True)
 
-    text = re.sub(
-        r"<a\b[^>]*>.*?</a\s*>",
-        remove_old_anchor,
-        text,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
 
-    # جایگزینی نام برند در متن رابط کاربری.
-    text = OLD_BRAND.sub(BRAND, text)
+def fix_html_attributes(html):
+    """Set Persian RTL without deleting other HTML attributes."""
 
-    # اصلاح عنوان صفحه.
-    title = f"<title>{BRAND} 👑 | پنل مدیریت</title>"
+    def replace_tag(match):
+        # Use group(0): the complete match always exists.
+        tag = match.group(0)
+        opening = tag[:-1] if tag.endswith(">") else tag
 
-    if re.search(r"</title\s*>", text, re.IGNORECASE):
-        text = re.sub(
-            r"<title\b[^>]*>.*?</title\s*>",
-            title,
-            text,
-            count=1,
-            flags=re.IGNORECASE | re.DOTALL,
-        )
-
-    # تنظیم زبان و جهت صفحه بدون حذف سایر ویژگی‌های html.
-    def fix_html_tag(match):
-        attrs = re.sub(
+        opening = re.sub(
             r"""\s+(?:lang|dir)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)""",
             "",
-            match.group(1),
+            opening,
             flags=re.IGNORECASE,
         )
-        return attrs + ' lang="fa" dir="rtl">'
 
-    text = re.sub(
+        return opening + ' lang="fa" dir="rtl">'
+
+    return re.sub(
         r"<html\b[^>]*>",
-        fix_html_tag,
-        text,
+        replace_tag,
+        html,
         count=1,
         flags=re.IGNORECASE,
     )
 
-    # افزودن قالب اختصاصی فقط یک بار.
-    marker = "POMP NET MOHAMMAD — CRYSTAL GLASS"
 
-    if marker not in text and re.search(
-        r"</head\s*>", text, re.IGNORECASE
-    ):
-        text = re.sub(
+def fix_title(html):
+    title = f"<title>{BRAND} | پنل مدیریت</title>"
+
+    pattern = r"<title\b[^>]*>.*?</title\s*>"
+
+    if re.search(pattern, html, flags=re.IGNORECASE | re.DOTALL):
+        return re.sub(
+            pattern,
+            lambda _: title,
+            html,
+            count=1,
+            flags=re.IGNORECASE | re.DOTALL,
+        )
+
+    if re.search(r"</head\s*>", html, flags=re.IGNORECASE):
+        return re.sub(
             r"</head\s*>",
-            lambda _: "<style>\n" + COLORS + "\n</style>\n</head>",
-            text,
+            lambda _: title + "\n</head>",
+            html,
             count=1,
             flags=re.IGNORECASE,
         )
 
-    return text
+    return html
+
+
+def inject_theme(html):
+    if STYLE_MARKER in html:
+        return html
+
+    if not re.search(r"</head\s*>", html, flags=re.IGNORECASE):
+        log("WARN", "تگ </head> پیدا نشد؛ CSS در این صفحه اضافه نشد.")
+        return html
+
+    style = "<style>\n" + GLASS_CSS + "\n</style>\n"
+
+    return re.sub(
+        r"</head\s*>",
+        lambda _: style + "</head>",
+        html,
+        count=1,
+        flags=re.IGNORECASE,
+    )
+
+
+def clean_html(html):
+    # Replace visible branding in HTML only.
+    # Do not rewrite JavaScript, CSS, APIs or backend files.
+    html = OLD_BRAND.sub(BRAND, html)
+
+    html = fix_html_attributes(html)
+    html = fix_title(html)
+    html = inject_theme(html)
+
+    return html
 
 
 def main():
+    print("=" * 58)
+    print("POMP NET MOHAMMAD — SAFE FRONTEND REPAIR")
+    print("=" * 58)
+
+    if not ROOT.is_dir():
+        log("FAIL", f"مسیر پروژه پیدا نشد: {ROOT}")
+        raise SystemExit(1)
+
     if not STATIC.is_dir():
-        raise SystemExit(
-            f"ERROR: پوشه رابط کاربری پیدا نشد: {STATIC}"
-        )
+        log("FAIL", f"پوشه رابط کاربری پیدا نشد: {STATIC}")
+        raise SystemExit(1)
 
     files = [
         path
         for path in STATIC.rglob("*")
         if path.is_file()
-        and path.suffix.lower() in EXTENSIONS
+        and path.suffix.lower() in {".html", ".htm"}
     ]
 
     if not files:
-        raise SystemExit(
-            "ERROR: هیچ فایل متنی رابط کاربری پیدا نشد."
-        )
+        log("FAIL", "هیچ فایل HTML برای بررسی پیدا نشد.")
+        raise SystemExit(1)
 
     changed = 0
+    failed = 0
 
     for path in files:
         try:
             original = path.read_text(encoding="utf-8")
-        except (UnicodeDecodeError, OSError):
-            print(f"SKIPPED: {path.relative_to(ROOT)}")
-            continue
+            updated = clean_html(original)
 
-        updated = original
+            if updated != original:
+                path.write_text(updated, encoding="utf-8")
+                changed += 1
+                log("UPDATED", str(path.relative_to(ROOT)))
+            else:
+                log("PASS", str(path.relative_to(ROOT)))
 
-        if path.suffix.lower() in {".html", ".htm"}:
-            updated = clean_html(updated)
+        except (OSError, UnicodeError, re.error) as error:
+            failed += 1
+            log("FAIL", f"{path.relative_to(ROOT)}: {error}")
+
+    # Validate required project files without changing them.
+    required = [
+        ROOT / "main.py",
+        ROOT / "requirements.txt",
+        ROOT / "static" / "index.html",
+        ROOT / "static" / "login.html",
+        ROOT / "static" / "sub.html",
+    ]
+
+    missing = []
+
+    for path in required:
+        if path.is_file() and path.stat().st_size > 0:
+            log("PASS", f"وجود فایل {path.relative_to(ROOT)}")
         else:
-            # پاک‌سازی نام برند از فایل‌های متنی رابط کاربری.
-            updated = OLD_BRAND.sub(BRAND, updated)
-
-        updated = OLD_BRAND_URL.sub("", updated)
-
-        if updated != original:
-            path.write_text(updated, encoding="utf-8")
-            changed += 1
-            print(f"UPDATED: {path.relative_to(ROOT)}")
+            missing.append(str(path.relative_to(ROOT)))
+            log("FAIL", f"فایل ضروری مفقود یا خالی است: {path}")
 
     print()
-    print("POMP NET MOHAMMAD cleanup finished.")
-    print(f"Scanned files: {len(files)}")
-    print(f"Changed files: {changed}")
-    print("توجه: فایل‌های backend و مسیرهای API تغییر نکرده‌اند.")
+    print(f"HTML files scanned: {len(files)}")
+    print(f"HTML files changed: {changed}")
+    print(f"File processing errors: {failed}")
+
+    if missing or failed:
+        log("FAIL", "بررسی ناموفق بود؛ خطاهای بالا باید بررسی شوند.")
+        raise SystemExit(1)
+
+    print("PASS: Cleanup completed.")
+    print(
+        "توجه: این موفقیت به معنی موفقیت Docker، "
+        "اجرای برنامه یا Deploy نیست."
+    )
 
 
 if __name__ == "__main__":
