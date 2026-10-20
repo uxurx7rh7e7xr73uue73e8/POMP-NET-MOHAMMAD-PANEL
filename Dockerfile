@@ -8,10 +8,16 @@ WORKDIR /app
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       build-essential git curl ca-certificates libssl-dev zlib1g-dev pkg-config \
+       build-essential \
+       git \
+       curl \
+       ca-certificates \
+       libssl-dev \
+       zlib1g-dev \
+       pkg-config \
     && rm -rf /var/lib/apt/lists/*
 
-# دریافت MTProxy واقعی
+# ساخت باینری واقعی MTProxy
 RUN git clone --depth 1 \
     https://github.com/TelegramMessenger/MTProxy.git /tmp/MTProxy \
     && make -C /tmp/MTProxy \
@@ -20,19 +26,22 @@ RUN git clone --depth 1 \
        /usr/local/bin/mtproto-proxy \
     && rm -rf /tmp/MTProxy
 
-# دریافت سورس اصلی SpiderPanel
+# دریافت و آماده‌سازی هسته واقعی پنل
 RUN git clone --depth 1 \
-    https://github.com/amirh00sain/SpiderPanel.git /tmp/spiderpanel \
-    && cp -a /tmp/spiderpanel/. /app/ \
-    && rm -rf /tmp/spiderpanel
+    https://github.com/amirh00sain/spiderpanel.git /tmp/panel-source \
+    && cp -a /tmp/panel-source/. /app/ \
+    && rm -rf /tmp/panel-source
 
-# اجرای تغییرات برندینگ، بدون جایگزینی منطق اصلی پنل
+# اعمال برندینگ بدون بازنویسی منطق اصلی
 COPY pompnet_brand.py /tmp/pompnet_brand.py
 
-RUN pip install -r requirements.txt \
+RUN test -f /app/main.py \
+    && test -f /app/requirements.txt \
+    && pip install -r /app/requirements.txt \
     && python /tmp/pompnet_brand.py /app \
-    && python -m py_compile main.py
+    && python -m py_compile /app/main.py
 
 EXPOSE 8080
+EXPOSE 443
 
 CMD ["sh", "-c", "exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8080}"]
